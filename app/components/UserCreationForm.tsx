@@ -13,13 +13,6 @@ interface Portal {
   hotspotTypes: number[];
 }
 
-interface Site {
-  siteId: string;
-  name: string;
-  region?: string;
-  scenario?: string;
-}
-
 export default function UserCreationForm() {
   const [selectedSite, setSelectedSite] = useState<string>('');
   const [portals, setPortals] = useState<Portal[]>([]);

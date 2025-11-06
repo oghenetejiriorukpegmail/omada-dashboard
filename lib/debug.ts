@@ -58,11 +58,12 @@ export const debugLog = {
     console.group(`🔴 API Error: ${endpoint}`);
     console.log('Timestamp:', new Date().toISOString());
     console.error('Error:', error);
-    console.log('Error Message:', error?.message || 'Unknown error');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.log('Error Message:', errorMessage);
     console.groupEnd();
   },
 
-  info: (message: string, ...args: any[]) => {
+  info: (message: string, ...args: unknown[]) => {
     if (!isDebugMode()) return;
     console.log(`ℹ️ [DEBUG] ${message}`, ...args);
   }
