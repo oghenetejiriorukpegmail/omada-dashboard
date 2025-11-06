@@ -284,6 +284,18 @@ export default function UserCreationForm() {
 
             {/* Settings Panel and Dark Mode Toggle */}
             <div className="flex items-start space-x-3">
+              {/* View Guests Button */}
+              <a
+                href="/guests"
+                className="p-3 bg-[#f1f3f6] dark:bg-[#333c50] rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-[#3d4a5f] transition-all shadow-md group flex items-center space-x-2"
+                title="View all guests"
+              >
+                <svg className="w-5 h-5 text-[#f7a83c]" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                </svg>
+                <span className="text-sm font-semibold text-[#333c50] dark:text-white whitespace-nowrap">View Guests</span>
+              </a>
+
               {/* Dark Mode Toggle */}
               <button
                 onClick={() => setDarkMode(!darkMode)}
