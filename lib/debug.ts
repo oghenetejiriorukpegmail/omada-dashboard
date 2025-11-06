@@ -36,7 +36,7 @@ export const debugLog = {
     console.groupEnd();
   },
 
-  apiResponse: (endpoint: string, response: Response, data?: any) => {
+  apiResponse: (endpoint: string, response: Response, data?: unknown) => {
     if (!isDebugMode()) return;
 
     const statusColor = response.ok ? '🟢' : '🔴';
@@ -52,7 +52,7 @@ export const debugLog = {
     console.groupEnd();
   },
 
-  apiError: (endpoint: string, error: any) => {
+  apiError: (endpoint: string, error: unknown) => {
     if (!isDebugMode()) return;
 
     console.group(`🔴 API Error: ${endpoint}`);

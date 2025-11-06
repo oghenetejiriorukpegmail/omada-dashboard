@@ -21,7 +21,6 @@ interface Site {
 }
 
 export default function UserCreationForm() {
-  const [sites, setSites] = useState<Site[]>([]);
   const [selectedSite, setSelectedSite] = useState<string>('');
   const [portals, setPortals] = useState<Portal[]>([]);
   const [selectedPortals, setSelectedPortals] = useState<string[]>([]);
@@ -128,7 +127,6 @@ export default function UserCreationForm() {
           throw new Error(sitesData.error || 'Failed to fetch sites');
         }
 
-        setSites(sitesData.sites);
         setNeedsSiteSelection(true);
 
         if (sitesData.sites.length === 0) {
@@ -173,13 +171,6 @@ export default function UserCreationForm() {
     }
   };
 
-  const handlePortalToggle = (portalId: string) => {
-    setSelectedPortals((prev) =>
-      prev.includes(portalId)
-        ? prev.filter((id) => id !== portalId)
-        : [...prev, portalId]
-    );
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
