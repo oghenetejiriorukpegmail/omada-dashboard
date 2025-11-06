@@ -21,6 +21,7 @@ export default function GuestsPage() {
   const [darkMode, setDarkMode] = useState(false);
   const [userTimezone, setUserTimezone] = useState('');
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Initialize dark mode from localStorage
   useEffect(() => {
@@ -126,8 +127,15 @@ export default function GuestsPage() {
     return `${minutes}m remaining`;
   };
 
-  const activeGuests = guests.filter(g => !g.isExpired);
-  const expiredGuests = guests.filter(g => g.isExpired);
+  // Filter guests based on search query
+  const filteredGuests = guests.filter(guest => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return guest.userName.toLowerCase().includes(query);
+  });
+
+  const activeGuests = filteredGuests.filter(g => !g.isExpired);
+  const expiredGuests = filteredGuests.filter(g => g.isExpired);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#1a2332] dark:to-[#25363F] py-8 px-4">
@@ -193,6 +201,43 @@ export default function GuestsPage() {
                 </svg>
               </button>
             </div>
+          </div>
+
+          {/* Search Bar */}
+          <div className="my-6">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Search by room number..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 bg-white dark:bg-[#333c50] border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-4 focus:ring-[#f7a83c]/20 focus:border-[#f7a83c] text-[#333c50] dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all text-lg"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#f7a83c] transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            {searchQuery && (
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                {filteredGuests.length === 0 ? (
+                  <span className="text-red-600 dark:text-red-400">No guests found matching &ldquo;{searchQuery}&rdquo;</span>
+                ) : (
+                  <span>Found {filteredGuests.length} guest{filteredGuests.length !== 1 ? 's' : ''} matching &ldquo;{searchQuery}&rdquo;</span>
+                )}
+              </p>
+            )}
           </div>
 
           {/* Stats */}
@@ -275,7 +320,26 @@ export default function GuestsPage() {
           </div>
         )}
 
-        {!loading && guests.length > 0 && (
+        {!loading && guests.length > 0 && filteredGuests.length === 0 && searchQuery && (
+          <div className="bg-white dark:bg-[#333c50] rounded-xl p-12 text-center border border-gray-200 dark:border-gray-600 shadow-md">
+            <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <h3 className="text-xl font-bold text-[#333c50] dark:text-white mb-2">No matching guests</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">No guests found matching &ldquo;{searchQuery}&rdquo;</p>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="inline-flex items-center space-x-2 px-6 py-3 bg-[#f7a83c] hover:bg-[#e89729] text-white font-semibold rounded-lg transition-all"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span>Clear Search</span>
+            </button>
+          </div>
+        )}
+
+        {!loading && filteredGuests.length > 0 && (
           <div className="bg-white dark:bg-[#333c50] rounded-xl border border-gray-200 dark:border-gray-600 shadow-md overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -299,7 +363,7 @@ export default function GuestsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                  {guests.map((guest) => (
+                  {filteredGuests.map((guest) => (
                     <tr key={guest.id} className="hover:bg-gray-50 dark:hover:bg-[#2d3f4a] transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
