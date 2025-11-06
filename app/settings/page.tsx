@@ -79,6 +79,13 @@ export default function SettingsPage() {
     }
   }, [selectedSite]);
 
+  // Auto-select portal if only one is available
+  useEffect(() => {
+    if (portals.length === 1 && selectedPortals.length === 0) {
+      setSelectedPortals([portals[0].id]);
+    }
+  }, [portals, selectedPortals.length]);
+
   const checkAndFetchData = async () => {
     setFetchingSites(true);
     setError('');
