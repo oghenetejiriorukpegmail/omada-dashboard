@@ -21,7 +21,7 @@ export default function GuestsPage() {
   const [error, setError] = useState('');
   const [darkMode, setDarkMode] = useState(false);
   const [userTimezone, setUserTimezone] = useState('');
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh, setAutoRefresh] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [deletingGuest, setDeletingGuest] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
