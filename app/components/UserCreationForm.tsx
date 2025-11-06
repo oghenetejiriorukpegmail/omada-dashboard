@@ -63,6 +63,26 @@ export default function UserCreationForm() {
     setUserTimezone(timezone);
   }, []);
 
+  // Load saved settings from localStorage
+  useEffect(() => {
+    const savedSite = localStorage.getItem('selectedSite');
+    const savedPortals = localStorage.getItem('selectedPortals');
+
+    if (savedSite) {
+      setSelectedSite(savedSite);
+    }
+    if (savedPortals) {
+      try {
+        const parsed = JSON.parse(savedPortals);
+        if (Array.isArray(parsed)) {
+          setSelectedPortals(parsed);
+        }
+      } catch (e) {
+        console.error('Failed to parse saved portals:', e);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     checkAndFetchData();
   }, []);
@@ -313,98 +333,19 @@ export default function UserCreationForm() {
                 )}
               </button>
 
-              {/* Compact Settings Panel */}
-              <div className="bg-[#f1f3f6] dark:bg-[#333c50] rounded-xl p-4 border border-gray-200 dark:border-gray-600 shadow-lg min-w-[280px]">
-                <div className="flex items-center space-x-2 mb-3">
-                  <svg className="w-4 h-4 text-[#f7a83c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <div className="text-xs font-bold text-[#333c50] dark:text-white uppercase tracking-wide">
-                    Configuration
-                  </div>
-                </div>
-
-              {fetchingSites ? (
-                <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-400">
-                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-[#f7a83c]"></div>
-                  <span>Loading...</span>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {needsSiteSelection && (
-                    <div>
-                      <label htmlFor="site" className="block text-xs font-semibold text-[#333c50] dark:text-gray-300 mb-1.5">
-                        Site Location
-                      </label>
-                      <select
-                        id="site"
-                        value={selectedSite}
-                        onChange={(e) => setSelectedSite(e.target.value)}
-                        className="w-full px-3 py-2 text-sm bg-white dark:bg-[#25363F] border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#f7a83c] focus:border-transparent transition-all"
-                        required
-                      >
-                        <option value="">Select site...</option>
-                        {sites.map((site) => (
-                          <option key={site.siteId} value={site.siteId}>
-                            {site.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {(!needsSiteSelection || selectedSite) && (
-                    <div>
-                      <label className="block text-xs font-semibold text-[#333c50] dark:text-gray-300 mb-1.5">
-                        Network Access
-                      </label>
-                      {fetchingPortals ? (
-                        <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-400">
-                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-[#f7a83c]"></div>
-                          <span>Loading portals...</span>
-                        </div>
-                      ) : portals.length === 0 ? (
-                        <div className="text-xs text-red-600 dark:text-red-400 flex items-center space-x-1">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                          </svg>
-                          <span>No portals available</span>
-                        </div>
-                      ) : (
-                        <div className="space-y-2 max-h-36 overflow-y-auto pr-1 custom-scrollbar">
-                          {portals.map((portal) => (
-                            <label key={portal.id} className="flex items-start space-x-2.5 cursor-pointer group p-2 rounded-lg hover:bg-white/50 dark:hover:bg-[#2d3f4a]/50 transition-colors">
-                              <input
-                                type="checkbox"
-                                checked={selectedPortals.includes(portal.id)}
-                                onChange={() => handlePortalToggle(portal.id)}
-                                className="mt-0.5 h-4 w-4 text-[#f7a83c] focus:ring-2 focus:ring-[#f7a83c] border-gray-300 rounded transition-all accent-[#f7a83c]"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="text-xs font-semibold text-[#333c50] dark:text-white truncate group-hover:text-[#f7a83c] transition-colors">
-                                  {portal.name}
-                                </div>
-                                {portal.ssidList && portal.ssidList.length > 0 && (
-                                  <div className="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5 flex items-center space-x-1">
-                                    <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                                      <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-                                    </svg>
-                                    <span>{portal.ssidList.join(', ')}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </label>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Settings Gear Icon */}
+              <a
+                href="/settings"
+                className="p-3 bg-[#f1f3f6] dark:bg-[#333c50] rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-[#3d4a5f] transition-all shadow-md group"
+                title="Configure site and portal settings"
+              >
+                <svg className="w-5 h-5 text-[#f7a83c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </a>
             </div>
           </div>
-        </div>
 
           {/* Error and Success Messages */}
           {error && (
