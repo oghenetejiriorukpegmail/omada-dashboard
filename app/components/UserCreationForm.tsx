@@ -188,6 +188,16 @@ export default function UserCreationForm() {
     }
 
     try {
+      // Convert local datetime to ISO string with timezone info
+      let checkoutISO: string | undefined = undefined;
+      if (checkoutDate) {
+        // datetime-local format is "YYYY-MM-DDTHH:mm"
+        // Create a Date object which interprets it as local time
+        const localDate = new Date(checkoutDate);
+        // Convert to ISO string which includes timezone (e.g., "2025-11-06T08:03:00.000Z")
+        checkoutISO = localDate.toISOString();
+      }
+
       const response = await fetch('/api/users', {
         method: 'POST',
         headers: {
@@ -198,7 +208,7 @@ export default function UserCreationForm() {
           password,
           portals: selectedPortals,
           siteId: needsSiteSelection ? selectedSite : undefined,
-          checkoutDate: checkoutDate || undefined,
+          checkoutDate: checkoutISO,
         }),
       });
 
