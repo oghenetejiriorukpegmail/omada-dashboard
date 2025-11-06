@@ -131,6 +131,27 @@ If `OMADA_SITE_ID` is empty:
 5. Enter username and password
 6. Click "Create User"
 
+### Timezone Handling
+
+The dashboard automatically detects and uses your local timezone for all time-related operations:
+
+**For Hotel Staff:**
+- All times are displayed in your browser's local timezone
+- The checkout date/time picker shows times in your local timezone
+- A timezone indicator is displayed below the checkout field (e.g., "Times are shown in America/New_York")
+- Simply select the checkout time as you would read it on a clock
+
+**How it works:**
+- The browser automatically detects your timezone
+- Times entered in the checkout field are stored in UTC on the server
+- Server logs display times in UTC format for consistency
+- Cleanup operations use UTC timestamps for accurate expiration checks
+
+**Example:**
+- Hotel staff in New York (EST/EDT) selects checkout time: "Nov 6, 2025, 12:00 PM"
+- System stores as UTC: "Nov 6, 2025, 5:00 PM UTC" (converting EST to UTC)
+- Cleanup runs at the correct local time based on UTC timestamp
+
 ### Automatic User Cleanup
 
 The application automatically deletes users after their checkout time has elapsed. This feature runs as a background scheduled task.

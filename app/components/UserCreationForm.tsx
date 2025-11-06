@@ -34,6 +34,7 @@ export default function UserCreationForm() {
   const [fetchingPortals, setFetchingPortals] = useState(false);
   const [needsSiteSelection, setNeedsSiteSelection] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [userTimezone, setUserTimezone] = useState('');
 
   // Initialize dark mode from localStorage
   useEffect(() => {
@@ -55,6 +56,12 @@ export default function UserCreationForm() {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
+
+  // Detect user's timezone
+  useEffect(() => {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    setUserTimezone(timezone);
+  }, []);
 
   useEffect(() => {
     checkAndFetchData();
@@ -474,12 +481,17 @@ export default function UserCreationForm() {
                   min={new Date().toISOString().slice(0, 16)}
                   className="w-full px-6 py-5 text-xl bg-[#f1f3f6] dark:bg-[#333c50] border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-4 focus:ring-[#f7a83c]/20 focus:border-[#f7a83c] dark:text-white transition-all shadow-inner hover:shadow-lg"
                 />
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 flex items-center space-x-1">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                  </svg>
-                  <span>Leave empty for 30-day access from today</span>
-                </p>
+                <div className="mt-2 space-y-1">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center space-x-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                    </svg>
+                    <span>Times are shown in <strong className="text-[#f7a83c]">{userTimezone || 'your local timezone'}</strong></span>
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 pl-5">
+                    Leave empty for 30-day access from today
+                  </p>
+                </div>
               </div>
 
               {/* Submit Button - Moby Orange */}
