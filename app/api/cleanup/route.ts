@@ -6,8 +6,8 @@ export async function POST(request: NextRequest) {
   try {
     const { siteId } = await request.json().catch(() => ({}));
 
-    // Create client without requiring site ID if not provided
-    const client = createOmadaClient(!siteId);
+    // Create client without requiring site ID (we'll fetch all sites if needed)
+    const client = createOmadaClient(false);
 
     logger.info('Starting expired user cleanup', { siteId: siteId || 'all-sites' });
 
