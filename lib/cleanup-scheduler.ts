@@ -11,10 +11,10 @@ export function startCleanupScheduler() {
     return;
   }
 
-  // Run cleanup every minute for testing
+  // Run cleanup every hour by default
   // Cron format: minute hour day month weekday
-  // '* * * * *' = Every minute
-  const schedule = process.env.CLEANUP_SCHEDULE || '* * * * *';
+  // '0 * * * *' = Every hour at minute 0
+  const schedule = process.env.CLEANUP_SCHEDULE || '0 * * * *';
 
   logger.info('Starting cleanup scheduler', { schedule });
 
