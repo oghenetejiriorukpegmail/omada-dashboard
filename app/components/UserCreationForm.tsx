@@ -192,9 +192,16 @@ export default function UserCreationForm() {
       let checkoutISO: string | undefined = undefined;
       if (checkoutDate) {
         // datetime-local format is "YYYY-MM-DDTHH:mm"
-        // Create a Date object which interprets it as local time
-        const localDate = new Date(checkoutDate);
-        // Convert to ISO string which includes timezone (e.g., "2025-11-06T08:03:00.000Z")
+        // Explicitly parse as local time by appending seconds
+        // This ensures the browser treats it as local time, not UTC
+        const localDateString = checkoutDate.includes(':')
+          ? `${checkoutDate}:00`  // Add seconds if not present
+          : checkoutDate;
+
+        // Create Date object - browser interprets as local time
+        const localDate = new Date(localDateString);
+
+        // Convert to ISO string (UTC) - e.g., "2025-11-06T13:03:00.000Z"
         checkoutISO = localDate.toISOString();
       }
 
@@ -488,7 +495,16 @@ export default function UserCreationForm() {
                   id="checkoutDate"
                   value={checkoutDate}
                   onChange={(e) => setCheckoutDate(e.target.value)}
-                  min={new Date().toISOString().slice(0, 16)}
+                  min={(() => {
+                    // Get current date/time in LOCAL timezone for the min attribute
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    return `${year}-${month}-${day}T${hours}:${minutes}`;
+                  })()}
                   className="w-full px-6 py-5 text-xl bg-[#f1f3f6] dark:bg-[#333c50] border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-4 focus:ring-[#f7a83c]/20 focus:border-[#f7a83c] dark:text-white transition-all shadow-inner hover:shadow-lg"
                 />
                 <div className="mt-2 space-y-1">
