@@ -10,6 +10,7 @@ A Next.js dashboard for managing TP-Link Omada local users and portal access thr
 - **Portal Management**: View and select from configured portals with their SSIDs
 - **User Creation**: Create local users with username/password authentication
 - **Multi-Portal Support**: Attach users to one or multiple portals
+- **Automatic Cleanup**: Scheduled deletion of expired users (configurable cron schedule)
 - **Responsive UI**: Works on desktop and mobile devices with dark mode support
 - **Network Access**: Accessible from any device on your local network
 - **Hotel Management**: Optimized for hotel WiFi guest access (room number + guest name)
@@ -130,6 +131,60 @@ If `OMADA_SITE_ID` is empty:
 5. Enter username and password
 6. Click "Create User"
 
+### Automatic User Cleanup
+
+The application automatically deletes users after their checkout time has elapsed. This feature runs as a background scheduled task.
+
+**How it works:**
+- A cron job runs periodically (default: every hour)
+- Checks all sites for users with expired checkout times
+- Automatically deletes expired users from the Omada controller
+- Logs all cleanup activities for audit purposes
+
+**Configuration:**
+
+Set the cleanup schedule in `.env.local` (optional):
+```bash
+# Run every hour (default)
+CLEANUP_SCHEDULE='0 * * * *'
+
+# Run every 30 minutes
+CLEANUP_SCHEDULE='*/30 * * * *'
+
+# Run daily at midnight
+CLEANUP_SCHEDULE='0 0 * * *'
+
+# Run every 6 hours
+CLEANUP_SCHEDULE='0 */6 * * *'
+```
+
+**Manual Cleanup:**
+
+Trigger cleanup manually via API:
+```bash
+# Clean up all sites
+curl -X POST http://localhost:3500/api/cleanup
+
+# Clean up specific site
+curl -X POST http://localhost:3500/api/cleanup \
+  -H "Content-Type: application/json" \
+  -d '{"siteId": "your-site-id"}'
+```
+
+**Monitoring:**
+
+Check application logs to see cleanup activity:
+```bash
+# View logs (Docker)
+docker logs -f omada-dashboard
+
+# View logs (PM2)
+pm2 logs omada-dashboard
+
+# View logs (systemd)
+journalctl -u omada-dashboard -f
+```
+
 ## API Endpoints
 
 ### GET /api/sites
@@ -175,7 +230,29 @@ Creates a new local user attached to specified portals.
   "userName": "username",
   "password": "password",
   "portals": ["portal-id-1", "portal-id-2"],
-  "siteId": "site-id"  // Optional if OMADA_SITE_ID is configured
+  "siteId": "site-id",  // Optional if OMADA_SITE_ID is configured
+  "checkoutDate": "2025-11-07T12:00:00"  // Optional - ISO format
+}
+```
+
+### POST /api/cleanup
+Manually triggers cleanup of expired users. Also accessible via GET for cron services.
+
+**Request (optional):**
+```json
+{
+  "siteId": "site-id"  // Optional - clean specific site only
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "sitesChecked": 3,
+  "expiredUsersFound": 5,
+  "usersDeleted": 5,
+  "errors": []
 }
 ```
 
@@ -187,13 +264,16 @@ omada-dashboard/
 │   ├── api/
 │   │   ├── sites/route.ts        # Site listing endpoint
 │   │   ├── portals/route.ts      # Portal listing endpoint
-│   │   └── users/route.ts        # User creation endpoint
+│   │   ├── users/route.ts        # User creation endpoint
+│   │   └── cleanup/route.ts      # Cleanup endpoint for expired users
 │   ├── components/
 │   │   └── UserCreationForm.tsx  # Main form component
 │   └── page.tsx                  # Home page
 ├── lib/
 │   ├── omada-api.ts              # Omada API client
-│   └── logger.ts                 # Structured logging
+│   ├── logger.ts                 # Structured logging
+│   └── cleanup-scheduler.ts      # Automated cleanup scheduler
+├── instrumentation.ts            # Server startup hooks
 ├── .env.example                  # Environment variables template
 └── README.md
 ```

@@ -71,6 +71,32 @@ interface CreateLocalUserResponse {
   };
 }
 
+interface LocalUser {
+  id: string;
+  userName: string;
+  enable: boolean;
+  expirationTime: number;
+  mac?: string;
+  bindingType: number;
+  portals: string[];
+}
+
+interface LocalUserListResponse {
+  errorCode: number;
+  msg: string;
+  result: {
+    totalRows: number;
+    currentPage: number;
+    currentSize: number;
+    data: LocalUser[];
+  };
+}
+
+interface DeleteUserResponse {
+  errorCode: number;
+  msg: string;
+}
+
 interface Site {
   siteId: string;
   name: string;
@@ -225,6 +251,66 @@ export class OmadaAPI {
     }
 
     return data;
+  }
+
+  async getLocalUsers(siteId?: string, page: number = 1, pageSize: number = 100): Promise<LocalUser[]> {
+    const token = await this.authenticate();
+    const targetSiteId = siteId || this.config.siteId;
+
+    if (!targetSiteId) {
+      throw new Error('Site ID is required to list users');
+    }
+
+    const url = `${this.config.baseUrl}/openapi/v1/${this.config.omadaId}/sites/${targetSiteId}/hotspot/localusers?page=${page}&pageSize=${pageSize}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `AccessToken=${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get local users: ${response.statusText}`);
+    }
+
+    const data: LocalUserListResponse = await response.json();
+
+    if (data.errorCode !== 0) {
+      throw new Error(`Failed to get local users: ${data.msg}`);
+    }
+
+    return data.result.data;
+  }
+
+  async deleteLocalUser(userId: string, siteId?: string): Promise<void> {
+    const token = await this.authenticate();
+    const targetSiteId = siteId || this.config.siteId;
+
+    if (!targetSiteId) {
+      throw new Error('Site ID is required to delete user');
+    }
+
+    const url = `${this.config.baseUrl}/openapi/v1/${this.config.omadaId}/sites/${targetSiteId}/hotspot/localusers/${userId}`;
+
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `AccessToken=${token}`,
+      },
+    });
+
+    const data: DeleteUserResponse = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete user: ${response.statusText} - ${data.msg || JSON.stringify(data)}`);
+    }
+
+    if (data.errorCode !== 0) {
+      throw new Error(`Failed to delete user: ${data.msg} (Error Code: ${data.errorCode})`);
+    }
   }
 }
 
