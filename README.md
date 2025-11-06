@@ -73,12 +73,37 @@ OMADA_API_BASE_URL=https://omada.yourdomain.com:8043
 
 Find your Interface Access Address at **Settings > Platform Integration > Open API > View** (click the View button on your application).
 
-**Note about Self-Signed Certificates:**
+**Handling Self-Signed SSL Certificates:**
 
-Local controllers often use self-signed SSL certificates. You may encounter certificate errors. To resolve:
+Local Omada controllers typically use self-signed SSL certificates. If you encounter certificate errors like `UNABLE_TO_VERIFY_LEAF_SIGNATURE` or `CERT_HAS_EXPIRED`, you have three options:
 
-1. **Recommended:** Add the certificate to your system's trusted certificates
-2. **For development only:** Set `NODE_TLS_REJECT_UNAUTHORIZED=0` in your environment (not recommended for production)
+**Option 1: Accept Self-Signed Certificates (Quickest for Internal Use)**
+
+Add this to your `.env.local` file:
+```env
+NODE_TLS_REJECT_UNAUTHORIZED=0
+```
+
+⚠️ **Security Note:** This disables SSL certificate validation. Only use this for:
+- Internal/private networks
+- Development and testing
+- When your Omada controller is on a trusted local network
+
+**DO NOT** use this in production environments exposed to the internet.
+
+**Option 2: Add Certificate to System Trust Store (Most Secure)**
+
+Export the certificate from your Omada controller and add it to your system's trusted certificates:
+
+1. Export the certificate from your browser when accessing the Omada web interface
+2. Add it to your system's certificate store:
+   - **Linux:** Copy to `/usr/local/share/ca-certificates/` and run `sudo update-ca-certificates`
+   - **macOS:** Add to Keychain Access and mark as "Always Trust"
+   - **Windows:** Import via Certificate Manager (certmgr.msc)
+
+**Option 3: Use Valid SSL Certificate**
+
+Install a valid SSL certificate on your Omada controller (Let's Encrypt, commercial CA, etc.)
 
 **Notes:**
 - If `OMADA_SITE_ID` is left empty, the dashboard will query available sites and display a site selector
@@ -424,6 +449,27 @@ docker rm omada-dashboard
 - Health checks enabled
 - Automatic restart on failure
 - Minimal Alpine-based image (~150MB)
+
+**Using with Local Controllers (Self-Signed Certificates):**
+
+If your local Omada controller uses a self-signed certificate, add `NODE_TLS_REJECT_UNAUTHORIZED=0` to your `.env.local` file:
+
+```env
+# .env.local
+OMADA_API_BASE_URL=https://192.168.1.100:8043
+NODE_TLS_REJECT_UNAUTHORIZED=0
+```
+
+Or pass it directly to Docker:
+```bash
+docker run -d \
+  --name omada-dashboard \
+  --restart unless-stopped \
+  -p 3500:3500 \
+  --env-file .env.local \
+  -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
+  omada-dashboard:latest
+```
 
 **Advanced Docker Commands:**
 ```bash
