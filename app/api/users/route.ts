@@ -111,3 +111,39 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { userId, siteId } = body;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'User ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const client = createOmadaClient(!siteId);
+
+    logger.info('Deleting user', {
+      userId,
+      siteId: siteId || 'default'
+    });
+
+    await client.deleteLocalUser(userId, siteId || undefined);
+
+    logger.info('User deleted successfully', {
+      userId,
+      siteId: siteId || 'default'
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    logger.error('Error deleting user', error, { endpoint: '/api/users' });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to delete user' },
+      { status: 500 }
+    );
+  }
+}
