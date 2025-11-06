@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { debugLog } from '@/lib/debug';
 
 interface Guest {
   id: string;
@@ -54,8 +55,10 @@ export default function GuestsPage() {
   const fetchGuests = async () => {
     try {
       setError('');
+      debugLog.apiRequest('/api/guests', { method: 'GET' });
       const response = await fetch('/api/guests');
       const data = await response.json();
+      debugLog.apiResponse('/api/guests', response, data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch guests');
@@ -70,6 +73,7 @@ export default function GuestsPage() {
 
       setGuests(sortedGuests);
     } catch (err) {
+      debugLog.apiError('/api/guests', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch guests');
     } finally {
       setLoading(false);
@@ -88,18 +92,23 @@ export default function GuestsPage() {
     setShowDeleteConfirm(false);
 
     try {
-      const response = await fetch('/api/users', {
+      const requestBody = JSON.stringify({
+        userId: guestToDelete.id,
+        siteId: guestToDelete.siteId,
+      });
+
+      const requestOptions = {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          userId: guestToDelete.id,
-          siteId: guestToDelete.siteId,
-        }),
-      });
+        body: requestBody,
+      };
 
+      debugLog.apiRequest('/api/users', requestOptions);
+      const response = await fetch('/api/users', requestOptions);
       const data = await response.json();
+      debugLog.apiResponse('/api/users', response, data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to delete guest');
@@ -109,6 +118,7 @@ export default function GuestsPage() {
       setGuests(prev => prev.filter(g => g.id !== guestToDelete.id));
       setGuestToDelete(null);
     } catch (err) {
+      debugLog.apiError('/api/users (DELETE)', err);
       setError(err instanceof Error ? err.message : 'Failed to delete guest');
     } finally {
       setDeletingGuest(null);

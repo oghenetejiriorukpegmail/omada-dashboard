@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { debugLog } from '@/lib/debug';
 
 interface Portal {
   id: string;
@@ -104,8 +105,10 @@ export default function UserCreationForm() {
     setFetchingSites(true);
     setError('');
     try {
+      debugLog.apiRequest('/api/portals', { method: 'GET' });
       const portalsResponse = await fetch('/api/portals');
       const portalsData = await portalsResponse.json();
+      debugLog.apiResponse('/api/portals', portalsResponse, portalsData);
 
       if (portalsResponse.ok) {
         const enabledPortals = portalsData.portals.filter((p: Portal) => p.enable);
@@ -116,8 +119,10 @@ export default function UserCreationForm() {
           setError('No enabled portals found. Please configure portals in Omada first.');
         }
       } else {
+        debugLog.apiRequest('/api/sites', { method: 'GET' });
         const sitesResponse = await fetch('/api/sites');
         const sitesData = await sitesResponse.json();
+        debugLog.apiResponse('/api/sites', sitesResponse, sitesData);
 
         if (!sitesResponse.ok) {
           throw new Error(sitesData.error || 'Failed to fetch sites');
@@ -133,6 +138,7 @@ export default function UserCreationForm() {
         }
       }
     } catch (err) {
+      debugLog.apiError('checkAndFetchData', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
     } finally {
       setFetchingSites(false);
@@ -143,8 +149,11 @@ export default function UserCreationForm() {
     setFetchingPortals(true);
     setError('');
     try {
-      const response = await fetch(`/api/portals?siteId=${siteId}`);
+      const endpoint = `/api/portals?siteId=${siteId}`;
+      debugLog.apiRequest(endpoint, { method: 'GET' });
+      const response = await fetch(endpoint);
       const data = await response.json();
+      debugLog.apiResponse(endpoint, response, data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch portals');
@@ -157,6 +166,7 @@ export default function UserCreationForm() {
         setError('No enabled portals found for this site. Please configure portals in Omada first.');
       }
     } catch (err) {
+      debugLog.apiError('fetchPortals', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch portals');
     } finally {
       setFetchingPortals(false);
@@ -225,21 +235,28 @@ export default function UserCreationForm() {
         checkoutISO = localDate.toISOString();
       }
 
-      const response = await fetch('/api/users', {
+      const requestBody = JSON.stringify({
+        userName: username,
+        password,
+        portals: selectedPortals,
+        siteId: needsSiteSelection ? selectedSite : undefined,
+        checkoutDate: checkoutISO,
+      });
+
+      const requestOptions = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          userName: username,
-          password,
-          portals: selectedPortals,
-          siteId: needsSiteSelection ? selectedSite : undefined,
-          checkoutDate: checkoutISO,
-        }),
-      });
+        body: requestBody,
+      };
 
+      debugLog.apiRequest('/api/users', requestOptions);
+
+      const response = await fetch('/api/users', requestOptions);
       const data = await response.json();
+
+      debugLog.apiResponse('/api/users', response, data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create user');
@@ -251,6 +268,7 @@ export default function UserCreationForm() {
       setCheckoutDate('');
       setSelectedPortals([]);
     } catch (err) {
+      debugLog.apiError('/api/users', err);
       setError(err instanceof Error ? err.message : 'Failed to create user');
     } finally {
       setLoading(false);

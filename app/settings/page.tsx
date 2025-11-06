@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { debugLog } from '@/lib/debug';
 
 interface Portal {
   id: string;
@@ -31,6 +32,7 @@ export default function SettingsPage() {
   const [fetchingPortals, setFetchingPortals] = useState(false);
   const [needsSiteSelection, setNeedsSiteSelection] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
 
   // Initialize dark mode from localStorage
   useEffect(() => {
@@ -42,6 +44,14 @@ export default function SettingsPage() {
     }
   }, []);
 
+  // Initialize debug mode from localStorage
+  useEffect(() => {
+    const savedDebugMode = localStorage.getItem('debugMode');
+    if (savedDebugMode !== null) {
+      setDebugMode(savedDebugMode === 'true');
+    }
+  }, []);
+
   // Update document class when dark mode changes
   useEffect(() => {
     if (darkMode) {
@@ -50,6 +60,14 @@ export default function SettingsPage() {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
+
+  // Update localStorage when debug mode changes
+  useEffect(() => {
+    localStorage.setItem('debugMode', debugMode.toString());
+    if (debugMode) {
+      console.log('🐛 Debug mode enabled - API calls will be logged to console');
+    }
+  }, [debugMode]);
 
   // Load saved settings
   useEffect(() => {
@@ -90,16 +108,20 @@ export default function SettingsPage() {
     setFetchingSites(true);
     setError('');
     try {
+      debugLog.apiRequest('/api/portals', { method: 'GET' });
       const portalsResponse = await fetch('/api/portals');
       const portalsData = await portalsResponse.json();
+      debugLog.apiResponse('/api/portals', portalsResponse, portalsData);
 
       if (portalsResponse.ok) {
         const enabledPortals = portalsData.portals.filter((p: Portal) => p.enable);
         setPortals(enabledPortals);
         setNeedsSiteSelection(false);
       } else {
+        debugLog.apiRequest('/api/sites', { method: 'GET' });
         const sitesResponse = await fetch('/api/sites');
         const sitesData = await sitesResponse.json();
+        debugLog.apiResponse('/api/sites', sitesResponse, sitesData);
 
         if (!sitesResponse.ok) {
           throw new Error(sitesData.error || 'Failed to fetch sites');
@@ -113,6 +135,7 @@ export default function SettingsPage() {
         }
       }
     } catch (err) {
+      debugLog.apiError('checkAndFetchData', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
     } finally {
       setFetchingSites(false);
@@ -124,8 +147,11 @@ export default function SettingsPage() {
     setFetchingPortals(true);
     setError('');
     try {
-      const response = await fetch(`/api/portals?siteId=${siteId}`);
+      const endpoint = `/api/portals?siteId=${siteId}`;
+      debugLog.apiRequest(endpoint, { method: 'GET' });
+      const response = await fetch(endpoint);
       const data = await response.json();
+      debugLog.apiResponse(endpoint, response, data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch portals');
@@ -134,6 +160,7 @@ export default function SettingsPage() {
       const enabledPortals = data.portals.filter((p: Portal) => p.enable);
       setPortals(enabledPortals);
     } catch (err) {
+      debugLog.apiError('fetchPortals', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch portals');
     } finally {
       setFetchingPortals(false);
@@ -207,21 +234,40 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-3 bg-white dark:bg-[#333c50] rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-[#3d4a5f] transition-all shadow-md"
-            >
-              {darkMode ? (
-                <svg className="w-5 h-5 text-[#f7a83c]" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+            {/* Toggles */}
+            <div className="flex items-center space-x-3">
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-3 bg-white dark:bg-[#333c50] rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-[#3d4a5f] transition-all shadow-md"
+                title="Toggle dark mode"
+              >
+                {darkMode ? (
+                  <svg className="w-5 h-5 text-[#f7a83c]" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 text-[#333c50]" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                  </svg>
+                )}
+              </button>
+
+              {/* Debug Mode Toggle */}
+              <button
+                onClick={() => setDebugMode(!debugMode)}
+                className={`p-3 rounded-xl border transition-all shadow-md ${
+                  debugMode
+                    ? 'bg-[#f7a83c] border-[#f7a83c] text-white'
+                    : 'bg-white dark:bg-[#333c50] border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-[#3d4a5f]'
+                }`}
+                title={debugMode ? 'Debug mode enabled - API calls logged to console' : 'Enable debug mode to log API calls'}
+              >
+                <svg className={`w-5 h-5 ${debugMode ? 'text-white' : 'text-[#333c50] dark:text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
-              ) : (
-                <svg className="w-5 h-5 text-[#333c50]" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                </svg>
-              )}
-            </button>
+              </button>
+            </div>
           </div>
         </div>
 
